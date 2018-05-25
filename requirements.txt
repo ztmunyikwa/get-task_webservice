@@ -1,3 +1,7 @@
 Flask
 gunicorn
-
+scipy
+scikit-learn
+pandas
+flask
+gunicorn

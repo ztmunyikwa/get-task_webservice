@@ -15,6 +15,14 @@ app = Flask(__name__)
 #use the route() decorator to tell Flask what URL should trigger our function
 @app.route('/', methods=['POST'])
 def homepage():	
+	return jsonify({
+		'message': 'This is my homepage'
+	}) 
+
+
+
+@app.route('/gettask', methods=['POST'])
+def gettask():
 	df = pd.read_csv('occsDWAsIndustries_full.csv', sep=',')
 
 	np.random.seed(22)
