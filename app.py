@@ -5,54 +5,38 @@ import json
 import pandas as pd
 import numpy as np
 import random 
+from peewee import (
+    SqliteDatabase, PostgresqlDatabase, Model, IntegerField,
+    FloatField, BooleanField, TextField, DateTimeField
+)
 import datetime
 
-#This will allow us to use a local database called sqlite when we 
-#are developing on our laptops and use a more production-ready database 
-#called postgresql when deploying to heroku with very little change to our code.
-
-from peewee import (
-    SqliteDatabase, Model, DateTimeField, IntegerField, FloatField,
-    BooleanField, TextField,
-)
 
 
-
-
-
-########################################
-# Begin database stuff
-#Create a sqlite databse that will be stored in a file called tasks_assigned.db
+####Begin Database stuff
 DB = SqliteDatabase('tasks_assigned.db')
 
-
 class AssignedTask(Model):
-	#because none of the fields are initialized with primary_key=True, 
-	#an auto-incrementing primary key will automatically be created and named “id”.
+    user_id= TextField()
+    dwa = TextField()
+    industry = IntegerField()
+    job = TextField()
+    created_date = DateTimeField(default=datetime.datetime.now)
 
-	user_id = TextField()
-	dwa = TextField()
-	industry = FloatField()
-	job=TextField()
-	created_date = DateTimeField(default=datetime.datetime.now)
-
-	class Meta:
-		database = DB
-
+    class Meta:
+        database = DB
 
 DB.create_tables([AssignedTask], safe=True)
 
-# End database stuff
+
+####End database stuff
 ########################################
 
+
+
 ########################################
-
-
-
-
 # Normal flask app stuff
-########################################
-# Begin webserver stuff
+
 app = Flask(__name__)
 
 
@@ -76,36 +60,59 @@ def gettask():
 
 	np.random.seed(22)
 
+	#get_random_industry_num = np.random.randint(0,df.shape[0])
+
+	#randomly select an industry for testing
+	#industry = df.get_value(get_random_industry_num, 'NAICS2')
 	#use payload to take input on industry
 	payload=request.get_json()
 	industry = int(float(payload['ind']))
-	user_agent= payload['useragent']
+
 
 	pieces= [df[(df.NAICS2==industry)], df[df.NAICS2==0], df[df.NAICS2==99]]
+
 	df_all= pd.concat(pieces)
 
+	task_set = False
+
+	while task_set==False:
+		#use payload to take input on industry
+		payload=request.get_json()
+		industry = int(float(payload['ind']))
+		user_agent= payload['useragent']
+
+		pieces= [df[(df.NAICS2==industry)], df[df.NAICS2==0], df[df.NAICS2==99]]
+		df_all= pd.concat(pieces)
 
 
-	np.random.seed( 22 )
-	random_dwa =df_all.sample(n=1) 
 
-	dwa_title = random_dwa.iloc[0,3]
-	job = random_dwa.iloc[0, 1]
+		#np.random.seed( 22 )
+		random_dwa =df_all.sample(n=1) 
+		dwa_title = random_dwa.iloc[0,3]
+		job = random_dwa.iloc[0, 1]
 
-	q = AssignedTask(
-        user_id=user_agent,
-        dwa=dwa_title,
-        job=job,
-        industry=industry
-    )
-	q.save()
+		#if user_id, dwa has already been assigned, redo the loop
+		query=AssignedTask.select().where(AssignedTask.user_id == user_agent, AssignedTask.dwa == dwa_title)
+		if len(query) > 0:
+			print(query)
+			continue
+		else:
+			task_set=True
+			q = AssignedTask(
+		        user_id=user_agent,
+		        dwa=dwa_title,
+		        job=job,
+		        industry=industry
+		    )
+			q.save()
 
-	return jsonify({
- 		'task': dwa_title,
-        'job': job
-	})  
+			return jsonify({
+		 		'task': dwa_title,
+		        'job': job
+			})  
 # End webserver stuff
 ########################################
+
 
 
 
