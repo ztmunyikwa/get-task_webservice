@@ -37,7 +37,9 @@ def gettask():
 	#industry = df.get_value(get_random_industry_num, 'NAICS2')
 	#use payload to take input on industry
 	payload=request.get_json()
-	industry = payload['ind']
+	industry = int(float(payload['ind']))
+
+
 	pieces= [df[(df.NAICS2==industry)], df[df.NAICS2==0], df[df.NAICS2==99]]
 
 	df_all= pd.concat(pieces)
