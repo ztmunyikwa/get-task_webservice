@@ -14,7 +14,7 @@ import datetime
 
 
 ####Begin Database stuff
-DB = SqliteDatabase('predictions.db')
+DB = SqliteDatabase('tasks_assigned.db')
 
 class AssignedTask(Model):
     user_id= TextField()
