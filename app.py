@@ -5,8 +5,35 @@ import json
 import pandas as pd
 import numpy as np
 import random 
+from peewee import (
+    SqliteDatabase, PostgresqlDatabase, Model, IntegerField,
+    FloatField, BooleanField, TextField, DateTimeField
+)
 
 
+
+####Begin Database stuff
+DB = SqliteDatabase('predictions.db')
+
+class AssignedTask(Model):
+    user_id= TextField()
+    dwa = TextField()
+    industry = IntegerField()
+    job = TextField()
+    created_date = DateTimeField(default=datetime.datetime.now)
+
+    class Meta:
+        database = DB
+
+DB.create_tables([AssignedTask], safe=True)
+
+
+####End database stuff
+########################################
+
+
+
+########################################
 # Normal flask app stuff
 
 app = Flask(__name__)
@@ -31,31 +58,47 @@ def gettask():
 	df=df.replace({'NAICS2': 49}, 48)
 
 	np.random.seed(22)
-	#get_random_industry_num = np.random.randint(0,df.shape[0])
 
-	#randomly select an industry for testing
-	#industry = df.get_value(get_random_industry_num, 'NAICS2')
-	#use payload to take input on industry
-	payload=request.get_json()
-	industry = int(float(payload['ind']))
+	task_set = False
 
+	while task_set==False:
+		#use payload to take input on industry
+		payload=request.get_json()
+		industry = int(float(payload['ind']))
+		user_agent= payload['useragent']
 
-	pieces= [df[(df.NAICS2==industry)], df[df.NAICS2==0], df[df.NAICS2==99]]
-
-	df_all= pd.concat(pieces)
-
+		pieces= [df[(df.NAICS2==industry)], df[df.NAICS2==0], df[df.NAICS2==99]]
+		df_all= pd.concat(pieces)
 
 
-	random.seed( 22 )
-	random_dwa =df_all.sample(n=1) 
 
-	dwa_title = random_dwa.iloc[0,3]
-	job = random_dwa.iloc[0, 1]
+		#np.random.seed( 22 )
+		random_dwa =df_all.sample(n=1) 
+		dwa_title = random_dwa.iloc[0,3]
+		job = random_dwa.iloc[0, 1]
 
-	return jsonify({
- 		'task': dwa_title,
-        'job': job
-	})  
+		#if user_id, dwa has already been assigned, redo the loop
+		query=AssignedTask.select().where(AssignedTask.user_id == user_agent, AssignedTask.dwa == dwa_title)
+		if len(query) > 0:
+			print(query)
+			continue
+		else:
+			task_set=True
+			q = AssignedTask(
+		        user_id=user_agent,
+		        dwa=dwa_title,
+		        job=job,
+		        industry=industry
+		    )
+			q.save()
+
+			return jsonify({
+		 		'task': dwa_title,
+		        'job': job
+			})  
+# End webserver stuff
+########################################
+
 
 
 
