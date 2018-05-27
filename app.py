@@ -59,6 +59,19 @@ def gettask():
 
 	np.random.seed(22)
 
+	#get_random_industry_num = np.random.randint(0,df.shape[0])
+
+	#randomly select an industry for testing
+	#industry = df.get_value(get_random_industry_num, 'NAICS2')
+	#use payload to take input on industry
+	payload=request.get_json()
+	industry = int(float(payload['ind']))
+
+
+	pieces= [df[(df.NAICS2==industry)], df[df.NAICS2==0], df[df.NAICS2==99]]
+
+	df_all= pd.concat(pieces)
+
 	task_set = False
 
 	while task_set==False:
