@@ -43,7 +43,7 @@ class AssignedTask(Model):
     class Meta:
         database = DB
 
-DB.create_tables([AssignedTask], safe=True)
+DB.create_tables([AssignedTask], safe=True)   ##safe: If set to True, the create table query will include an IF NOT EXISTS clause.
 
 
 ####End database stuff
