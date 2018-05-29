@@ -97,7 +97,7 @@ def gettask():
 		#use payload to take input on industry
 		payload=request.get_json()
 		industry = int(float(payload['ind']))
-		user_agent= payload['useragent']
+		user_id_qualtrics= payload['userid']
 
 		pieces= [df[(df.NAICS2==industry)], df[df.NAICS2==0], df[df.NAICS2==99]]
 		df_all= pd.concat(pieces)
@@ -110,14 +110,14 @@ def gettask():
 		job = random_dwa.iloc[0, 1]
 
 		#if user_id, dwa has already been assigned, redo the loop
-		query=AssignedTask.select().where(AssignedTask.user_id == user_agent, AssignedTask.dwa == dwa_title)
+		query=AssignedTask.select().where(AssignedTask.user_id == user_id_qualtrics, AssignedTask.dwa == dwa_title)
 		if len(query) > 0:
 			print(query)
 			continue
 		else:
 			task_set=True
 			q = AssignedTask(
-		        user_id=user_agent,
+		        user_id=user_id_qualtrics,
 		        dwa=dwa_title,
 		        job=job,
 		        industry=industry
