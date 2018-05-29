@@ -6,3 +6,4 @@ pandas
 flask
 peewee
 datetime
+psycopg2
