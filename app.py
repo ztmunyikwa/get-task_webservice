@@ -14,7 +14,24 @@ import datetime
 
 
 ####Begin Database stuff
-DB = SqliteDatabase('tasks_assigned.db')
+if 'DATABASE_URL' in os.environ:
+    db_url = os.environ['DATABASE_URL']
+    dbname = db_url.split('@')[1].split('/')[1]
+    user = db_url.split('@')[0].split(':')[1].lstrip('//')
+    password = db_url.split('@')[0].split(':')[2]
+    host = db_url.split('@')[1].split('/')[0].split(':')[0]
+    port = db_url.split('@')[1].split('/')[0].split(':')[1]
+    DB = PostgresqlDatabase(
+        dbname,
+        user=user,
+        password=password,
+        host=host,
+        port=port,
+    )
+else:
+    DB = SqliteDatabase('tasks_assigned.db')
+
+
 
 class AssignedTask(Model):
     user_id= TextField()
@@ -26,7 +43,7 @@ class AssignedTask(Model):
     class Meta:
         database = DB
 
-DB.create_tables([AssignedTask], safe=True)
+DB.create_tables([AssignedTask], safe=True)   ##safe: If set to True, the create table query will include an IF NOT EXISTS clause.
 
 
 ####End database stuff
