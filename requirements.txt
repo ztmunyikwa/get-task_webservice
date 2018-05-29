@@ -4,4 +4,6 @@ scipy
 scikit-learn
 pandas
 flask
-gunicorn
+peewee
+datetime
+psycopg2
