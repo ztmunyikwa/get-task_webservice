@@ -76,7 +76,7 @@ def gettask():
 	df=df.replace({'NAICS2': 45}, 44)
 	df=df.replace({'NAICS2': 49}, 48)
 
-	np.random.seed(22)
+	#np.random.seed(22)
 
 	#get_random_industry_num = np.random.randint(0,df.shape[0])
 
