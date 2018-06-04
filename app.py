@@ -37,6 +37,7 @@ else:
 class AssignedTask(Model):
     user_id= TextField()
     dwa = TextField()
+    dwa_id = TextField()
     industry = IntegerField()
     job = TextField()
     created_date = DateTimeField(default=datetime.datetime.now)
@@ -70,6 +71,7 @@ def homepage():
 @app.route('/gettask', methods=['POST'])
 def gettask():
 	df = pd.read_csv('occsDWAsIndustries_full.csv', sep=',')
+	
 	##replace recurring industries with one code
 	df=df.replace({'NAICS2': 32}, 31)
 	df=df.replace({'NAICS2': 33}, 31)
@@ -82,6 +84,7 @@ def gettask():
 
 	#randomly select an industry for testing
 	#industry = df.get_value(get_random_industry_num, 'NAICS2')
+	
 	#use payload to take input on industry
 	payload=request.get_json()
 	industry = int(float(payload['ind']))
@@ -103,22 +106,30 @@ def gettask():
 		df_all= pd.concat(pieces)
 
 
-
-		#np.random.seed( 22 )
 		random_dwa =df_all.sample(n=1) 
 		dwa_title = random_dwa.iloc[0,3]
+		dwa_id = random_dwa.iloc[0,2]
 		job = random_dwa.iloc[0, 1]
 
-		#if user_id, dwa has already been assigned, redo the loop
-		query=AssignedTask.select().where(AssignedTask.user_id == user_id_qualtrics, AssignedTask.dwa == dwa_title)
-		if len(query) > 0:
-			print(query)
+
+		query_usr_done = AssignedTask.select().where(AssignedTask.user_id == user_id_qualtrics, AssignedTask.dwa == dwa_title).count()
+		dwa_times_done = AssignedTask.select().where(AssignedTask.dwa == dwa_title, AssignedTask.dwa_id==dwa_id).count()
+
+		#if dwa has already been assigned assigned to the user, redo the loop
+		if query_usr_done > 0:
 			continue
+
+		#if the dwa has already been assigned ten times, then redo the loop
+		elif dwa_times_done >= 10: 
+			continue
+
+		#else, record this assignment, and return the assigned task and job 
 		else:
 			task_set=True
 			q = AssignedTask(
 		        user_id=user_id_qualtrics,
 		        dwa=dwa_title,
+		        dwa_id = dwa_id,
 		        job=job,
 		        industry=industry
 		    )
