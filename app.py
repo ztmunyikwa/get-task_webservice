@@ -70,14 +70,8 @@ def homepage():
 
 @app.route('/gettask', methods=['POST'])
 def gettask():
-	df = pd.read_csv('occsDWAsIndustries_full.csv', sep=',')
+	df = pd.read_csv('occsDWAsIndustries_full_clean.csv', sep=',')
 	
-	##replace recurring industries with one code
-	df=df.replace({'NAICS2': 32}, 31)
-	df=df.replace({'NAICS2': 33}, 31)
-	df=df.replace({'NAICS2': 45}, 44)
-	df=df.replace({'NAICS2': 49}, 48)
-
 	#np.random.seed(22)
 
 	#get_random_industry_num = np.random.randint(0,df.shape[0])
@@ -86,13 +80,12 @@ def gettask():
 	#industry = df.get_value(get_random_industry_num, 'NAICS2')
 	
 	#use payload to take input on industry
-	payload=request.get_json()
-	industry = int(float(payload['ind']))
+	#payload=request.get_json()
+	#industry = int(float(payload['ind']))
+	# do_filter = payload['filter_on']
 
 
-	pieces= [df[(df.NAICS2==industry)], df[df.NAICS2==0], df[df.NAICS2==99]]
-
-	df_all= pd.concat(pieces)
+	# df_all= df[(df.NAICS2==industry)]
 
 	task_set = False
 
@@ -102,8 +95,18 @@ def gettask():
 		industry = int(float(payload['ind']))
 		user_id_qualtrics= payload['userid']
 
-		pieces= [df[(df.NAICS2==industry)], df[df.NAICS2==0], df[df.NAICS2==99]]
-		df_all= pd.concat(pieces)
+		
+		try:
+			do_filter = payload['filter_on']
+		except KeyError:
+			do_filter = False
+		
+
+		if do_filter=="True":
+			df_all = df[(df.NAICS2==industry)&(df.rated==True)]
+		else:
+			df_all= df[(df.NAICS2==industry)]
+
 
 
 		random_dwa =df_all.sample(n=1) 
