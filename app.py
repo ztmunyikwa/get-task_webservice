@@ -127,9 +127,7 @@ def gettask():
 
 			return jsonify({
 		 		'task': dwa_title,
-		        'job': job,
-		        'check': df.rated.dtypes.name
-			})  
+		        'job': job			})  
 # End webserver stuff
 ########################################
 
