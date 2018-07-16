@@ -74,7 +74,11 @@ def gettask():
 	
 	#use payload to take input on industry
 	payload=request.get_json()
-	industry = int(float(payload['ind']))
+	try:
+		industry = int(float(payload['ind']))
+	except ValueError:
+		industry = payload['ind']
+		print payload['ind']
 	user_id_qualtrics= payload['userid']
 
 
