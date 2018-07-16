@@ -77,7 +77,7 @@ def gettask():
 	try:
 		industry = int(float(payload['ind']))
 	except ValueError:
-		industry = payload['ind']
+		industry = print(random.choice([62,11,31,48,44]))
 		print payload['ind']
 	user_id_qualtrics= payload['userid']
 
