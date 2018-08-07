@@ -8,7 +8,7 @@ import numpy as np
 import random 
 from peewee import (
     SqliteDatabase, PostgresqlDatabase, Model, IntegerField,
-    FloatField, BooleanField, TextField, DateTimeField
+    FloatField, BooleanField, TextField, DateTimeField,fn
 )
 import datetime
 
@@ -72,49 +72,81 @@ def homepage():
 def gettask():
 	df = pd.read_csv('occsDWAsIndustries_full_clean.csv', sep=',')
 	
-	#use payload to take input on industry
+
 	payload=request.get_json()
+
+	#set user id
+	user_id_qualtrics= payload['userid']
+	#set industry
 	try:
 		industry = int(float(payload['ind']))
 	except ValueError:
-		industry = random.choice([62,11,31,48,44])
-		print(payload['ind'])
-	user_id_qualtrics= payload['userid']
+		industry = random.choice([11,21,22,23,31,42,44,48,51,52,53,54,55,56,61,62,71,81])
+
+	#set the filter status (default is off)
+	try:
+		do_filter = payload['filter_on']
+	except KeyError:
+		do_filter = "False"
+
+	if do_filter=="True":
+		df_all = df[(df.NAICS2==industry)&(df.rated==True)]
+	else:
+		df_all= df[(df.NAICS2==industry)]
 
 
 	task_set = False
+	tries = 0 
 
 	while task_set==False:
+		#if tries!=5:
+		if tries!=0:
+			random_dwa =df_all.sample(n=1) 
+			dwa_title = random_dwa.iloc[0,3]
+			dwa_id = random_dwa.iloc[0,2]
+			job = random_dwa.iloc[0, 1]
 
-		
-		try:
-			do_filter = payload['filter_on']
-		except KeyError:
-			do_filter = "False"
-		
+		#elif tries==5:	
+		elif tries==0:
+			#get a list of the dwas that the user has already rated
+			query_usr_done= AssignedTask.select().where(AssignedTask.user_id == user_id_qualtrics)
+			dwas_ratedby_usr = [rating.dwa for rating in query_usr_done]
+			#get a list of the dwas that have already been rated ten times
+			query_ten_done= AssignedTask.select().group_by(AssignedTask).having(fn.Count(AssignedTask.dwa) >= 10)
+			dwas_ratedten = [rating.dwa for rating in query_ten_done]
 
-		if do_filter=="True":
-			df_all = df[(df.NAICS2==industry)&(df.rated==True)]
-		else:
-			df_all= df[(df.NAICS2==industry)]
+			#filter these dwas out of the df_all list 
+			dwas_to_filter =  list(set(dwas_ratedby_usr) | set(dwas_ratedten))
+			df_selectfrom= df_all[~df_all['DWA Title'].isin(dwas_to_filter)]
+
+			if df_selectfrom.empty:
+				df_selectfrom= df[~df['DWA Title'].isin(dwas_to_filter)]
+
+			#if industry subset is empty, randomly select from the second database 
+			random_dwa =df_selectfrom.sample(n=1) 
+			dwa_title = random_dwa.iloc[0,3]
+			dwa_id = random_dwa.iloc[0,2]
+			job = random_dwa.iloc[0, 1]
 
 
 
-		random_dwa =df_all.sample(n=1) 
-		dwa_title = random_dwa.iloc[0,3]
-		dwa_id = random_dwa.iloc[0,2]
-		job = random_dwa.iloc[0, 1]
 
 
-		query_usr_done = AssignedTask.select().where(AssignedTask.user_id == user_id_qualtrics, AssignedTask.dwa == dwa_title).count()
-		dwa_times_done = AssignedTask.select().where(AssignedTask.dwa == dwa_title, AssignedTask.dwa_id==dwa_id).count()
+		query_usr_done_count = AssignedTask.select().where(AssignedTask.user_id == user_id_qualtrics, AssignedTask.dwa == dwa_title).count()
+		dwa_times_done_count = AssignedTask.select().where(AssignedTask.dwa == dwa_title, AssignedTask.dwa_id==dwa_id).count()
+
+
+
+
 
 		#if dwa has already been assigned assigned to the user, redo the loop
-		if query_usr_done > 0:
+		if query_usr_done_count > 0:
+			tries = tries +1 
 			continue
 
 		#if the dwa has already been assigned ten times, then redo the loop
-		elif dwa_times_done >= 10: 
+		elif dwa_times_done_count >= 10: 
+			tries = tries +1 
 			continue
 
 		#else, record this assignment, and return the assigned task and job 
