@@ -99,15 +99,14 @@ def gettask():
 	tries = 0 
 
 	while task_set==False:
-		#if tries!=5:
-		if tries!=0:
+
+		if tries!=5:
 			random_dwa =df_all.sample(n=1) 
 			dwa_title = random_dwa.iloc[0,3]
 			dwa_id = random_dwa.iloc[0,2]
 			job = random_dwa.iloc[0, 1]
 
-		#elif tries==5:	
-		elif tries==0:
+		elif tries==5:	
 			#get a list of the dwas that the user has already rated
 			query_usr_done= AssignedTask.select().where(AssignedTask.user_id == user_id_qualtrics)
 			dwas_ratedby_usr = [rating.dwa for rating in query_usr_done]
