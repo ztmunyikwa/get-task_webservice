@@ -156,13 +156,38 @@ def gettask():
 		        dwa=dwa_title,
 		        dwa_id = dwa_id,
 		        job=job,
-		        industry=industry
+		        industry=industry,
+		        verified_complete=False
 		    )
 			q.save()
 
 			return jsonify({
 		 		'task': dwa_title,
 		        'job': job			})  
+
+
+
+
+
+@app.route('/verifytask', methods=['POST'])
+def verifytask():
+	payload=request.get_json()
+
+	user_id_qualtrics= payload['userid']
+
+
+	task1 = payload['task1']
+	task2 = payload['task2']
+	task3 = payload['task3']
+
+	q = AssignedTask.update(verified_complete=True).where(AssignedTask.user_id==user_id_qualtrics & AssignedTask.dwa==task1)
+	q = AssignedTask.update(verified_complete=True).where(AssignedTask.user_id==user_id_qualtrics & AssignedTask.dwa==task2)
+	q = AssignedTask.update(verified_complete=True).where(AssignedTask.user_id==user_id_qualtrics & AssignedTask.dwa==task3)
+
+	return jsonify ({
+		'success':True
+		})
+
 # End webserver stuff
 ########################################
 
