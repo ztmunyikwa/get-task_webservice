@@ -41,6 +41,7 @@ class AssignedTask(Model):
     industry = IntegerField()
     job = TextField()
     created_date = DateTimeField(default=datetime.datetime.now)
+    verified_complete = BooleanField(default=False)
 
     class Meta:
         database = DB
@@ -131,8 +132,8 @@ def gettask():
 
 
 
-		query_usr_done_count = AssignedTask.select().where(AssignedTask.user_id == user_id_qualtrics, AssignedTask.dwa == dwa_title).count()
-		dwa_times_done_count = AssignedTask.select().where(AssignedTask.dwa == dwa_title, AssignedTask.dwa_id==dwa_id).count()
+		query_usr_done_count = AssignedTask.select().where(AssignedTask.user_id == user_id_qualtrics, AssignedTask.dwa == dwa_title).count()  ###question for dan...chill to not check for verification here?
+		dwa_times_done_count = AssignedTask.select().where(AssignedTask.dwa == dwa_title, AssignedTask.dwa_id==dwa_id, AssignedTask.verified_complete==True).count()
 
 
 
@@ -163,7 +164,8 @@ def gettask():
 
 			return jsonify({
 		 		'task': dwa_title,
-		        'job': job			})  
+		        'job': job			
+		    })  
 
 
 
@@ -175,18 +177,28 @@ def verifytask():
 
 	user_id_qualtrics= payload['userid']
 
+	try:
+		task1 = payload['task1']
+		task2 = payload['task2']
+		task3 = payload['task3']
 
-	task1 = payload['task1']
-	task2 = payload['task2']
-	task3 = payload['task3']
 
-	q = AssignedTask.update(verified_complete=True).where(AssignedTask.user_id==user_id_qualtrics & AssignedTask.dwa==task1)
-	q = AssignedTask.update(verified_complete=True).where(AssignedTask.user_id==user_id_qualtrics & AssignedTask.dwa==task2)
-	q = AssignedTask.update(verified_complete=True).where(AssignedTask.user_id==user_id_qualtrics & AssignedTask.dwa==task3)
+	except KeyError:
+		return jsonify ({
+		'success':False
+		})
+	
+
+	q = AssignedTask.update(verified_complete=True).where(AssignedTask.user_id==user_id_qualtrics, AssignedTask.dwa==task1)
+	q.execute()
+	q = AssignedTask.update(verified_complete=True).where(AssignedTask.user_id==user_id_qualtrics, AssignedTask.dwa==task2)
+	q.execute()
+	q = AssignedTask.update(verified_complete=True).where(AssignedTask.user_id==user_id_qualtrics, AssignedTask.dwa==task3)
+	q.execute()
 
 	return jsonify ({
-		'success':True
-		})
+	'success':True
+	})
 
 # End webserver stuff
 ########################################
