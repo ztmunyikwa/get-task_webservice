@@ -115,7 +115,7 @@ def gettask():
 			dwas_ratedby_usr = [rating.dwa for rating in query_usr_done]
 			#get a list of the dwas that have already been rated ten times
 			query_ten_done= AssignedTask.select().group_by(AssignedTask).having(fn.Count(AssignedTask.dwa) >= 10)
-			query_count_done = [{item.dwa : AssignedTask.select().where(AssignedTask.dwa == item.dwa, AssignedTask.verified_complete==True).count()} for item in query_ten_done]
+			query_count_done = [{item.dwa : AssignedTask.select().where(AssignedTask.dwa == item.dwa).count()} for item in query_ten_done]
 			#dwas_ratedten = [rating.dwa for rating in query_ten_done]
 
 			#accommodating extras
@@ -144,7 +144,7 @@ def gettask():
 
 
 		query_usr_done_count = AssignedTask.select().where(AssignedTask.user_id == user_id_qualtrics, AssignedTask.dwa == dwa_title).count()  ###question for dan...chill to not check for verification here?
-		dwa_times_done_count = AssignedTask.select().where(AssignedTask.dwa == dwa_title, AssignedTask.dwa_id==dwa_id, AssignedTask.verified_complete==True).count()
+		dwa_times_done_count = AssignedTask.select().where(AssignedTask.dwa == dwa_title, AssignedTask.dwa_id==dwa_id).count()
 
 		#extras
 		extra_margin = 10 + dfPriority[dfPriority['DWA Title']==dwa_title]['remainingNeedCount'] - dwa_times_done_count 
