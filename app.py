@@ -45,8 +45,30 @@ class AssignedTask(Model):
 
     class Meta:
         database = DB
+        legacy_table_names	= False
 
-DB.create_tables([AssignedTask], safe=True)   ##safe: If set to True, the create table query will include an IF NOT EXISTS clause.
+
+
+class DwaBadCounts_ml (Model):
+	dwatitle = TextField()
+	badcount = IntegerField()
+	served = IntegerField()
+
+	class Meta:
+		database = DB
+		legacy_table_names	= False
+
+class DwaEvalCounts_ml(Model):
+	dwatitle = TextField()
+	alreadyEvalCount = IntegerField()
+	remainingNeedCount = IntegerField()
+
+	class Meta:
+		database = DB
+		legacy_table_names	= False
+
+
+DB.create_tables([AssignedTask, DwaBadCounts_ml ,DwaEvalCounts_ml], safe=True)   ##safe: If set to True, the create table query will include an IF NOT EXISTS clause.
 
 
 ####End database stuff
@@ -169,6 +191,44 @@ def gettask():
 
 
 
+@app.route('/getremainingtask', methods=['POST'])
+def getremainingtask():
+	payload=request.get_json()
+
+	#set user id
+	user_id_qualtrics= payload['userid']
+	task_set = False
+
+
+	#get a list of tasks that the user has already done.
+	query_usr_done= AssignedTask.select().where(AssignedTask.user_id == user_id_qualtrics)
+	dwas_ratedby_usr = [rating.dwa for rating in query_usr_done]
+
+
+	while task_set==False:
+		##then, select a random task from the table that has a remainingNeedCount greater than zero. 
+		##if this returns nothing, return one from the badcount table where badcount is greater than zero
+		##keep doing this until we find one the user has never rated.  
+		query_remaining = DwaEvalCounts_ml.select().where(DwaEvalCounts_ml.remainingNeedCount>0).order_by(fn.Random()).limit(1)
+
+		if query_remaining.exists():
+			task = query_remaining[0].dwatitle
+			if task in dwas_ratedby_usr:
+				continue
+			task_set = True
+		else:
+			query_bad = DwaBadCounts_ml.select().where(DwaBadCounts_ml.badcount>0).order_by(fn.Random()).limit(1)
+			task = query_bad[0].dwatitle 
+			if task in dwas_ratedby_usr:
+				continue
+			task_set = True
+
+	return jsonify({
+		 		'task': task,
+		 		'job': ''
+		    })  
+
+
 
 
 @app.route('/verifytask', methods=['POST'])
@@ -176,6 +236,10 @@ def verifytask():
 	payload=request.get_json()
 
 	user_id_qualtrics= payload['userid']
+	try:
+		getremainingtask_flag = payload['getremainingtask']
+	except KeyError:
+		getremainingtask_flag = "no"
 
 	try:
 		task1 = payload['task1']
@@ -188,7 +252,10 @@ def verifytask():
 		'success':False
 		})
 	
+	updatedeval= False
+	updatedbadcounts=False
 
+	#update assigned task 
 	q = AssignedTask.update(verified_complete=True).where(AssignedTask.user_id==user_id_qualtrics, AssignedTask.dwa==task1)
 	q.execute()
 	q = AssignedTask.update(verified_complete=True).where(AssignedTask.user_id==user_id_qualtrics, AssignedTask.dwa==task2)
@@ -196,8 +263,29 @@ def verifytask():
 	q = AssignedTask.update(verified_complete=True).where(AssignedTask.user_id==user_id_qualtrics, AssignedTask.dwa==task3)
 	q.execute()
 
+	#(on verify record, also decrement the dwaevalcount and increment badcount served)
+	if getremainingtask_flag=="yes":
+		q=DwaEvalCounts_ml.update(remainingNeedCount=DwaEvalCounts_ml.remainingNeedCount-1).where(DwaEvalCounts_ml.dwatitle==task1)
+		q.execute()
+		q=DwaEvalCounts_ml.update(remainingNeedCount=DwaEvalCounts_ml.remainingNeedCount-1).where(DwaEvalCounts_ml.dwatitle==task2)
+		q.execute()
+		q=DwaEvalCounts_ml.update(remainingNeedCount=DwaEvalCounts_ml.remainingNeedCount-1).where(DwaEvalCounts_ml.dwatitle==task3)
+		q.execute()
+		updatedeval=True 
+
+		q= DwaBadCounts_ml.update(served=DwaBadCounts_ml.served+1).where(DwaBadCounts_ml.dwatitle==task1)
+		q.execute()
+		q=DwaBadCounts_ml.update(served=DwaBadCounts_ml.served+1).where(DwaBadCounts_ml.dwatitle==task2)
+		q.execute()
+		q=DwaBadCounts_ml.update(served=DwaBadCounts_ml.served+1).where(DwaBadCounts_ml.dwatitle==task3)
+		q.execute()
+		updatedbadcounts=True
+
+
 	return jsonify ({
-	'success':True
+	'success':True,
+	'updatedeval':updatedeval,
+	'updatedbadcounts':updatedbadcounts
 	})
 
 # End webserver stuff
