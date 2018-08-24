@@ -204,6 +204,7 @@ def getremainingtask():
 
 	#get a list of tasks that the user has already done.
 	query_usr_done= AssignedTask.select().where(AssignedTask.user_id == user_id_qualtrics)
+	dwas_ratedby_usr = [rating.dwa for rating in query_usr_done]
 
 	while task_set==False:
 		##then, select a random task from the table that has a remainingNeedCount greater than zero. 
@@ -217,7 +218,7 @@ def getremainingtask():
 			if task in dwas_ratedby_usr:
 				continue
 			#get a subset of the big occupational dataframe where the DWA title is equal to the task
-			df_selectfrom= df_all[df_all['DWA Title']==task]
+			df_selectfrom= df[df['DWA Title']==task]
 			#randomly select one of the rows and set the job equal to the job in that row 
 			random_dwa =df_selectfrom.sample(n=1) 
 			job = random_dwa.iloc[0, 1]
@@ -237,7 +238,7 @@ def getremainingtask():
 
 	return jsonify({
 		 		'task': task,
-		 		'job': ''
+		 		'job': job
 		    })  
 
 
