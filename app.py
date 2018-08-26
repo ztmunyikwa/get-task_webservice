@@ -49,7 +49,7 @@ class AssignedTask(Model):
 
 
 
-class DwaBadCounts_ml (Model):
+class DwaBadCounts_ml(Model):
 	dwatitle = TextField()
 	badcount = IntegerField()
 	served = IntegerField()
