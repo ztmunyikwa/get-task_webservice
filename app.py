@@ -212,7 +212,7 @@ def getremainingtask():
 		##keep doing this until we find one the user has never rated.  
 		query_remaining = DwaEvalCounts_ml.select().where(DwaEvalCounts_ml.remainingNeedCount>0).order_by(fn.Random()).limit(1)
 
-		if query_remaining.exists():
+		if len(query_remaining)>0:
 			#select the task from the database
 			task = query_remaining[0].dwatitle
 			if task in dwas_ratedby_usr:
