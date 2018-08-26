@@ -280,7 +280,7 @@ def verifytask():
 	q_mster_t2 = AssignedTask.update(verified_complete=True).where(AssignedTask.user_id==user_id_qualtrics, AssignedTask.dwa==task2)
 	q_mster_t3 = AssignedTask.update(verified_complete=True).where(AssignedTask.user_id==user_id_qualtrics, AssignedTask.dwa==task3)
 
-	if user_id_qualtrics != "test" & test_flag=="no":
+	if (user_id_qualtrics != "test") & (test_flag=="no"):
 		q_mster_t1.execute()
 		q_mster_t2.execute()
 		q_mster_t3.execute()
@@ -296,7 +296,7 @@ def verifytask():
 		q_eval_t2=DwaEvalCounts_ml.update(remainingNeedCount=DwaEvalCounts_ml.remainingNeedCount-1).where(DwaEvalCounts_ml.dwatitle==task2)
 		q_eval_t3=DwaEvalCounts_ml.update(remainingNeedCount=DwaEvalCounts_ml.remainingNeedCount-1).where(DwaEvalCounts_ml.dwatitle==task3)
 
-		if user_id_qualtrics != "test"& test_flag=="no":
+		if (user_id_qualtrics != "test") & (test_flag=="no"):
 			q_eval_t1.execute()
 			q_eval_t2.execute()
 			q_eval_t3.execute()
@@ -307,7 +307,7 @@ def verifytask():
 		q_bad_t2=DwaBadCounts_ml.update(served=DwaBadCounts_ml.served+1).where(DwaBadCounts_ml.dwatitle==task2)
 		q_bad_t3=DwaBadCounts_ml.update(served=DwaBadCounts_ml.served+1).where(DwaBadCounts_ml.dwatitle==task3)
 
-		if user_id_qualtrics != "test" & test_flag=="no":
+		if (user_id_qualtrics != "test") & (test_flag=="no"):
 			q_bad_t1.execute()
 			q_bad_t2.execute()
 			q_bad_t3.execute()
