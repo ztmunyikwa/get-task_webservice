@@ -60,8 +60,8 @@ class DwaBadCounts_ml(Model):
 
 class DwaEvalCounts_ml(Model):
 	dwatitle = TextField()
-	alreadyEvalCount = IntegerField()
-	remainingNeedCount = IntegerField()
+	alreadyevalcount = IntegerField()
+	remainingneedcount = IntegerField()
 
 	class Meta:
 		database = DB
@@ -210,7 +210,7 @@ def getremainingtask():
 		##then, select a random task from the table that has a remainingNeedCount greater than zero. 
 		##if this returns nothing, return one from the badcount table where badcount is greater than zero
 		##keep doing this until we find one the user has never rated.  
-		query_remaining = DwaEvalCounts_ml.select().where(DwaEvalCounts_ml.remainingNeedCount>0).order_by(fn.Random()).limit(1)
+		query_remaining = DwaEvalCounts_ml.select().where(DwaEvalCounts_ml.remainingneedcount>0).order_by(fn.Random()).limit(1)
 
 		if query_remaining.exists():
 			#select the task from the database
@@ -292,9 +292,9 @@ def verifytask():
 
 	#(on verify record, also decrement the dwaevalcount and increment badcount served)
 	if getremainingtask_flag=="yes":
-		q_eval_t1=DwaEvalCounts_ml.update(remainingNeedCount=DwaEvalCounts_ml.remainingNeedCount-1).where(DwaEvalCounts_ml.dwatitle==task1)
-		q_eval_t2=DwaEvalCounts_ml.update(remainingNeedCount=DwaEvalCounts_ml.remainingNeedCount-1).where(DwaEvalCounts_ml.dwatitle==task2)
-		q_eval_t3=DwaEvalCounts_ml.update(remainingNeedCount=DwaEvalCounts_ml.remainingNeedCount-1).where(DwaEvalCounts_ml.dwatitle==task3)
+		q_eval_t1=DwaEvalCounts_ml.update(remainingneedcount=DwaEvalCounts_ml.remainingneedcount-1).where(DwaEvalCounts_ml.dwatitle==task1)
+		q_eval_t2=DwaEvalCounts_ml.update(remainingneedcount=DwaEvalCounts_ml.remainingneedcount-1).where(DwaEvalCounts_ml.dwatitle==task2)
+		q_eval_t3=DwaEvalCounts_ml.update(remainingneedcount=DwaEvalCounts_ml.remainingneedcount-1).where(DwaEvalCounts_ml.dwatitle==task3)
 
 		if (user_id_qualtrics != "test") & (test_flag=="no"):
 			q_eval_t1.execute()
