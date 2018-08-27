@@ -45,18 +45,18 @@ class AssignedTask(Model):
 
     class Meta:
         database = DB
-        legacy_table_names	= False
+        table_name = 'assignedtask'
 
 
 
-class DwaBadCounts_ml (Model):
+class DwaBadCounts_ml(Model):
 	dwatitle = TextField()
 	badcount = IntegerField()
 	served = IntegerField()
 
 	class Meta:
 		database = DB
-		legacy_table_names	= False
+		table_name = 'dwabadcounts_ml'
 
 class DwaEvalCounts_ml(Model):
 	dwatitle = TextField()
@@ -65,7 +65,7 @@ class DwaEvalCounts_ml(Model):
 
 	class Meta:
 		database = DB
-		legacy_table_names	= False
+		table_name = 'dwaevalcounts_ml'
 
 
 DB.create_tables([AssignedTask, DwaBadCounts_ml ,DwaEvalCounts_ml], safe=True)   ##safe: If set to True, the create table query will include an IF NOT EXISTS clause.
