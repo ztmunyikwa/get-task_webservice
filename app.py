@@ -321,6 +321,86 @@ def verifytask():
 	'updatedbadcounts':updatedbadcounts
 	})
 
+
+@app.route('/unverifytask', methods=['POST'])
+def unverifytask():
+	payload=request.get_json()
+
+	user_id_qualtrics= payload['userid']
+	
+
+	try:
+		getremainingtask_flag = payload['getremainingtask']
+	except KeyError:
+		getremainingtask_flag = "no"
+
+	try:
+		test_flag = payload['test']
+	except KeyError:
+		test_flag = "no"
+
+	try:
+		task1 = payload['Task1']
+		task2 = payload['Task2']
+		task3 = payload['Task3']
+
+
+	except KeyError:
+		return jsonify ({
+		'success':False
+		})
+	
+	updatedeval= False
+	updatedbadcounts=False
+
+	#update assigned task 
+	q_mster_t1 = AssignedTask.update(verified_complete=False).where(AssignedTask.user_id==user_id_qualtrics, AssignedTask.dwa==task1)
+	q_mster_t2 = AssignedTask.update(verified_complete=False).where(AssignedTask.user_id==user_id_qualtrics, AssignedTask.dwa==task2)
+	q_mster_t3 = AssignedTask.update(verified_complete=False).where(AssignedTask.user_id==user_id_qualtrics, AssignedTask.dwa==task3)
+
+	if (user_id_qualtrics != "test") & (test_flag=="no"):
+		q_mster_t1.execute()
+		q_mster_t2.execute()
+		q_mster_t3.execute()
+
+		updatedmaster = True 
+
+
+	
+
+	#(on verify record, also decrement the dwaevalcount and increment badcount served)
+	if getremainingtask_flag=="yes":
+		q_eval_t1=DwaEvalCounts_ml.update(remainingneedcount=DwaEvalCounts_ml.remainingneedcount+1).where(DwaEvalCounts_ml.dwatitle==task1)
+		q_eval_t2=DwaEvalCounts_ml.update(remainingneedcount=DwaEvalCounts_ml.remainingneedcount+1).where(DwaEvalCounts_ml.dwatitle==task2)
+		q_eval_t3=DwaEvalCounts_ml.update(remainingneedcount=DwaEvalCounts_ml.remainingneedcount+1).where(DwaEvalCounts_ml.dwatitle==task3)
+
+		if (user_id_qualtrics != "test") & (test_flag=="no"):
+			q_eval_t1.execute()
+			q_eval_t2.execute()
+			q_eval_t3.execute()
+
+			updatedeval=True 
+
+		q_bad_t1= DwaBadCounts_ml.update(served=DwaBadCounts_ml.served-1).where(DwaBadCounts_ml.dwatitle==task1)
+		q_bad_t2=DwaBadCounts_ml.update(served=DwaBadCounts_ml.served-1).where(DwaBadCounts_ml.dwatitle==task2)
+		q_bad_t3=DwaBadCounts_ml.update(served=DwaBadCounts_ml.served-1).where(DwaBadCounts_ml.dwatitle==task3)
+
+		if (user_id_qualtrics != "test") & (test_flag=="no"):
+			q_bad_t1.execute()
+			q_bad_t2.execute()
+			q_bad_t3.execute()
+
+			updatedbadcounts=True
+
+
+	return jsonify ({
+	'success':True,
+	'updatedeval':updatedeval,
+	'updatedbadcounts':updatedbadcounts
+	})
+
+
+
 # End webserver stuff
 ########################################
 
