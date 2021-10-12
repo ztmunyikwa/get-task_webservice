@@ -5,7 +5,7 @@ import json
 import pandas as pd
 import os
 import numpy as np
-import random 
+import random
 from peewee import (
     SqliteDatabase, PostgresqlDatabase, Model, IntegerField,
     FloatField, BooleanField, TextField, DateTimeField,fn
@@ -84,17 +84,17 @@ app = Flask(__name__)
 
 #use the route() decorator to tell Flask what URL should trigger our function
 @app.route('/', methods=['POST'])
-def homepage():	
+def homepage():
 	return jsonify({
 		'message': 'This is my homepage'
-	}) 
+	})
 
 
 
 @app.route('/gettask', methods=['POST'])
 def gettask():
 	df = pd.read_csv('occsDWAsIndustries_full_clean.csv', sep=',')
-	
+
 
 	payload=request.get_json()
 
@@ -119,17 +119,17 @@ def gettask():
 
 
 	task_set = False
-	tries = 0 
+	tries = 0
 
 	while task_set==False:
 
 		if tries!=5:
-			random_dwa =df_all.sample(n=1) 
+			random_dwa =df_all.sample(n=1)
 			dwa_title = random_dwa.iloc[0,3]
 			dwa_id = random_dwa.iloc[0,2]
 			job = random_dwa.iloc[0, 1]
 
-		elif tries==5:	
+		elif tries==5:
 			#get a list of the dwas that the user has already rated
 			query_usr_done= AssignedTask.select().where(AssignedTask.user_id == user_id_qualtrics)
 			dwas_ratedby_usr = [rating.dwa for rating in query_usr_done]
@@ -137,15 +137,15 @@ def gettask():
 			query_ten_done= AssignedTask.select().group_by(AssignedTask).having(fn.Count(AssignedTask.dwa) >= 10)
 			dwas_ratedten = [rating.dwa for rating in query_ten_done]
 
-			#filter these dwas out of the df_all list 
+			#filter these dwas out of the df_all list
 			dwas_to_filter =  list(set(dwas_ratedby_usr) | set(dwas_ratedten))
 			df_selectfrom= df_all[~df_all['DWA Title'].isin(dwas_to_filter)]
 
 			if df_selectfrom.empty:
 				df_selectfrom= df[~df['DWA Title'].isin(dwas_to_filter)]
 
-			#if industry subset is empty, randomly select from the second database 
-			random_dwa =df_selectfrom.sample(n=1) 
+			#if industry subset is empty, randomly select from the second database
+			random_dwa =df_selectfrom.sample(n=1)
 			dwa_title = random_dwa.iloc[0,3]
 			dwa_id = random_dwa.iloc[0,2]
 			job = random_dwa.iloc[0, 1]
@@ -163,15 +163,15 @@ def gettask():
 
 		#if dwa has already been assigned assigned to the user, redo the loop
 		if query_usr_done_count > 0:
-			tries = tries +1 
+			tries = tries +1
 			continue
 
 		#if the dwa has already been assigned ten times, then redo the loop
-		elif dwa_times_done_count >= 10: 
-			tries = tries +1 
+		elif dwa_times_done_count >= 10:
+			tries = tries +1
 			continue
 
-		#else, record this assignment, and return the assigned task and job 
+		#else, record this assignment, and return the assigned task and job
 		else:
 			task_set=True
 			q = AssignedTask(
@@ -186,8 +186,8 @@ def gettask():
 
 			return jsonify({
 		 		'task': dwa_title,
-		        'job': job			
-		    })  
+		        'job': job
+		    })
 
 
 
@@ -207,9 +207,9 @@ def getremainingtask():
 	dwas_ratedby_usr = [rating.dwa for rating in query_usr_done]
 
 	while task_set==False:
-		##then, select a random task from the table that has a remainingNeedCount greater than zero. 
+		##then, select a random task from the table that has a remainingNeedCount greater than zero.
 		##if this returns nothing, return one from the badcount table where badcount is greater than zero
-		##keep doing this until we find one the user has never rated.  
+		##keep doing this until we find one the user has never rated.
 		query_remaining = DwaEvalCounts_ml.select().where(DwaEvalCounts_ml.remainingneedcount>0).order_by(fn.Random()).limit(1)
 
 		if query_remaining.exists():
@@ -219,27 +219,27 @@ def getremainingtask():
 				continue
 			#get a subset of the big occupational dataframe where the DWA title is equal to the task
 			df_selectfrom= df[df['DWA Title']==task]
-			#randomly select one of the rows and set the job equal to the job in that row 
-			random_dwa =df_selectfrom.sample(n=1) 
+			#randomly select one of the rows and set the job equal to the job in that row
+			random_dwa =df_selectfrom.sample(n=1)
 			job = random_dwa.iloc[0, 1]
 			task_set = True
 		else:
 			query_bad = DwaBadCounts_ml.select().where(DwaBadCounts_ml.badcount>0).order_by(fn.Random()).limit(1)
-			task = query_bad[0].dwatitle 
+			task = query_bad[0].dwatitle
 
 			if task in dwas_ratedby_usr:
 				continue
 			#get a subset of the big occupational dataframe where the DWA title is equal to the task
 			df_selectfrom= df_all[df_all['DWA Title']==task]
-			#randomly select one of the rows and set the job equal to the job in that row 
-			random_dwa =df_selectfrom.sample(n=1) 
+			#randomly select one of the rows and set the job equal to the job in that row
+			random_dwa =df_selectfrom.sample(n=1)
 			job = random_dwa.iloc[0, 1]
 			task_set = True
 
 	return jsonify({
 		 		'task': task,
 		 		'job': job
-		    })  
+		    })
 
 
 
@@ -249,7 +249,7 @@ def verifytask():
 	payload=request.get_json()
 
 	user_id_qualtrics= payload['userid']
-	
+
 
 	try:
 		getremainingtask_flag = payload['getremainingtask']
@@ -271,11 +271,11 @@ def verifytask():
 		return jsonify ({
 		'success':False
 		})
-	
+
 	updatedeval= False
 	updatedbadcounts=False
 
-	#update assigned task 
+	#update assigned task
 	q_mster_t1 = AssignedTask.update(verified_complete=True).where(AssignedTask.user_id==user_id_qualtrics, AssignedTask.dwa==task1)
 	q_mster_t2 = AssignedTask.update(verified_complete=True).where(AssignedTask.user_id==user_id_qualtrics, AssignedTask.dwa==task2)
 	q_mster_t3 = AssignedTask.update(verified_complete=True).where(AssignedTask.user_id==user_id_qualtrics, AssignedTask.dwa==task3)
@@ -285,10 +285,10 @@ def verifytask():
 		q_mster_t2.execute()
 		q_mster_t3.execute()
 
-		updatedmaster = True 
+		updatedmaster = True
 
 
-	
+
 
 	#(on verify record, also decrement the dwaevalcount and increment badcount served)
 	if getremainingtask_flag=="yes":
@@ -301,7 +301,7 @@ def verifytask():
 			q_eval_t2.execute()
 			q_eval_t3.execute()
 
-			updatedeval=True 
+			updatedeval=True
 
 		q_bad_t1= DwaBadCounts_ml.update(served=DwaBadCounts_ml.served+1).where(DwaBadCounts_ml.dwatitle==task1)
 		q_bad_t2=DwaBadCounts_ml.update(served=DwaBadCounts_ml.served+1).where(DwaBadCounts_ml.dwatitle==task2)
@@ -327,7 +327,7 @@ def unverifytask():
 	payload=request.get_json()
 
 	user_id_qualtrics= payload['userid']
-	
+
 
 	try:
 		getremainingtask_flag = payload['getremainingtask']
@@ -349,11 +349,11 @@ def unverifytask():
 		return jsonify ({
 		'success':False
 		})
-	
+
 	updatedeval= False
 	updatedbadcounts=False
 
-	#update assigned task 
+	#update assigned task
 	q_mster_t1 = AssignedTask.update(verified_complete=False).where(AssignedTask.user_id==user_id_qualtrics, AssignedTask.dwa==task1)
 	q_mster_t2 = AssignedTask.update(verified_complete=False).where(AssignedTask.user_id==user_id_qualtrics, AssignedTask.dwa==task2)
 	q_mster_t3 = AssignedTask.update(verified_complete=False).where(AssignedTask.user_id==user_id_qualtrics, AssignedTask.dwa==task3)
@@ -363,10 +363,10 @@ def unverifytask():
 		q_mster_t2.execute()
 		q_mster_t3.execute()
 
-		updatedmaster = True 
+		updatedmaster = True
 
 
-	
+
 
 	#(on verify record, also decrement the dwaevalcount and increment badcount served)
 	if getremainingtask_flag=="yes":
@@ -379,7 +379,7 @@ def unverifytask():
 			q_eval_t2.execute()
 			q_eval_t3.execute()
 
-			updatedeval=True 
+			updatedeval=True
 
 		q_bad_t1= DwaBadCounts_ml.update(served=DwaBadCounts_ml.served-1).where(DwaBadCounts_ml.dwatitle==task1)
 		q_bad_t2=DwaBadCounts_ml.update(served=DwaBadCounts_ml.served-1).where(DwaBadCounts_ml.dwatitle==task2)
@@ -396,7 +396,8 @@ def unverifytask():
 	return jsonify ({
 	'success':True,
 	'updatedeval':updatedeval,
-	'updatedbadcounts':updatedbadcounts
+	'updatedbadcounts':updatedbadcounts,
+	'userid_verified': user_id_qualtrics
 	})
 
 
@@ -409,7 +410,7 @@ def unverifytask():
 
 
 
- 
+
 
 if __name__ == '__main__':
 	app.run(debug=True, use_reloader=True)
