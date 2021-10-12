@@ -318,7 +318,8 @@ def verifytask():
 	return jsonify ({
 	'success':True,
 	'updatedeval':updatedeval,
-	'updatedbadcounts':updatedbadcounts
+	'updatedbadcounts':updatedbadcounts,
+	'userid_verified': user_id_qualtrics
 	})
 
 
@@ -397,7 +398,7 @@ def unverifytask():
 	'success':True,
 	'updatedeval':updatedeval,
 	'updatedbadcounts':updatedbadcounts,
-	'userid_verified': user_id_qualtrics
+	'userid_unverified': user_id_qualtrics
 	})
 
 
